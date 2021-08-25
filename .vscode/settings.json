@@ -1,0 +1,4 @@
+{
+    "azureML.defaultWorkspaceId": "/subscriptions/ec5ba19e-6205-418f-a52d-d0943090ca16/resourceGroups/rg-wwe-ictx-dsplayground/providers/Microsoft.MachineLearningServices/workspaces/aml-wwe-ictx-dsplay",
+    "jupyter.jupyterServerType": "remote"
+}

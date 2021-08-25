@@ -1,6 +1,12 @@
-*NOTE:* This file is a template that you can use to create the README for your project. The *TODO* comments below will highlight the information you should be sure to include.
-
-# Your Project Title Here
+<p align="center">
+  <a href="https://github.com/github_username/repo_name">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Udacity_logo.png/800px-Udacity_logo.png" alt="Logo">
+  </a>
+  <h1 align="center">Azure Machine Learning Engineer | Capstone Project</h1>
+    <p align="center">
+    project_description
+    <br/>
+</p>
 
 *TODO:* Write a short introduction to your project.
 

@@ -44,7 +44,7 @@ def init():
     print("modeldir",os.getenv("AZUREML_MODEL_DIR") )
 
 
-    filename = os.getenv("AZUREML_MODEL_DIR")+"/model.pkl"
+    filename = os.getenv("AZUREML_MODEL_DIR")+"/model.joblib"
 
     with open(filename, "rb") as fil: 
         model = joblib.load(fil)

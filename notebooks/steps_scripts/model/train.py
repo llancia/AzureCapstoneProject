@@ -1,27 +1,28 @@
 import argparse
-from utils import StringCaster
 import os
+from glob import glob
 from typing import Tuple
 
 import joblib
 import numpy as np
 import pandas as pd
+from azureml.core import Dataset, Run
 from azureml.core.run import Run
 from azureml.data.dataset_factory import TabularDatasetFactory
+from sklearn.base import TransformerMixin
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import (accuracy_score, matthews_corrcoef,
+                             mean_squared_error, roc_auc_score)
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
-from sklearn.base import TransformerMixin
-from sklearn.metrics import accuracy_score, roc_auc_score, matthews_corrcoef
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.preprocessing import (FunctionTransformer, LabelEncoder,
+                                   OneHotEncoder, StandardScaler)
 
+from utils import StringCaster
 
-    
 
 def create_pipeline(**classifier_params):
     numeric_features = ['city_development_index', 'training_hours']
@@ -54,7 +55,7 @@ def create_pipeline(**classifier_params):
     return clf
 
 run = Run.get_context()
-
+ws = run.experiment.workspace
 
 def stratified_split(df, label="target"):
     X = df.drop(columns=[label])
@@ -64,9 +65,10 @@ def stratified_split(df, label="target"):
 
     return X_train,X_test , y_train, y_test
 
-def get_data() -> pd.DataFrame:
-    data = run.input_datasets['train_data']
-    return data.to_pandas_dataframe()
+def get_data(dataset_id) -> pd.DataFrame:
+    dataset = Dataset.get_by_id(ws, id=dataset_id)
+
+    return dataset.to_pandas_dataframe()
 
 
 def log_metrics(x_test,y_test,model):
@@ -94,7 +96,7 @@ def main():
     parser.add_argument('--n_estimators', type=int )
     parser.add_argument('--max_features', type=str)
     parser.add_argument('--max_depth', type=int)
-
+    parser.add_argument("--train-data", type=str)
 
     
     args = parser.parse_args()
@@ -103,7 +105,8 @@ def main():
     run.log("Max Features:", args.max_features)
     run.log("Max Depth:", np.int(args.max_depth))
 
-    x_train, x_test, y_train, y_test = stratified_split(get_data())
+    data = get_data(args.train_data)
+    x_train, x_test, y_train, y_test = stratified_split(data)
 
 
     model = create_pipeline(n_estimators=args.n_estimators,

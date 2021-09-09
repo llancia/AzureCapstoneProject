@@ -384,7 +384,8 @@ service.delete()
 ```
 
 ## Screen Recording
-*TODO* Provide a link to a screen recording of the project in action. Remember that the screencast should demonstrate:
+link to screen cast https://youtu.be/PnpwXfrYE0w
+containing 
 - A working model
 - Demo of the deployed  model
 - Demo of a sample request sent to the endpoint and its response

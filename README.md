@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/github_username/repo_name">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Udacity_logo.png/800px-Udacity_logo.png" alt="Logo">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Udacity_logo.PNG/800px-Udacity_logo.PNG" alt="Logo">
   </a>
   <h1 align="center">Azure Machine Learning Engineer | Capstone Project</h1>
     <p align="center">
@@ -55,12 +55,12 @@ We have to predict which data scientist is looking for a job change and thus, is
 
 By running the SetUp Pipeline, from the original dataset we register two different datasets
 
-![img\1.png]()
+![](img/1.PNG)
 
 - `HRAnalytics_train_dataset`
 - `HRAnalytics_test_dataset`
 
-![img\2.png]()
+![](img\2.PNG)
 
 we can then access using the following python code: 
 
@@ -115,7 +115,7 @@ The parameters are:
 ### Results
 After submitting the run to the Compute cluster we wait for it to complete by monitoring the widget: 
 
-![img/3.png]()
+![](img/3.PNG)
 
 After it's done we can get the result of the AutoML job by gathering the:
 
@@ -150,6 +150,8 @@ PipelineWithYTransformations(Pipeline={'memory': None,
                              y_transformer_name='LabelEncoder')
                              
 ```
+
+![](img/4.PNG)
 
 
 ## Hyperparameter Tuning
@@ -201,28 +203,185 @@ The script can be lunched by passing different parameters representig some of  t
 ```
 
 * **n_estimator** is the number of the tree composing the ensamble
-* **max_features** is the rule 
-* **max_depth**
+* **max_features** The number of features to consider when looking for the best split
+* **max_depth** The maximum depth of the tree. I
 
 We went through the combination of parameters to search the best one via a Random search which it does not give the absolute best parameters but its usually pretty close and helps in reducing the iteratons w.r.t a Grid Search approach.
 
-To do this we defiend a parameter space
+To do this we defined a parameter space
 
-```
+```{python}
+ps = RandomParameterSampling({
+        "--n_estimators": choice( [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]),
+        "--max_features": choice('auto', 'sqrt'),
+        "--max_depth": choice([int(x) for x in np.linspace(10, 110, num = 11)])
+    }
+)
 ```
 and a early termination policy
-
+```
+policy = BanditPolicy(slack_factor = 0.1,
+                        evaluation_interval = 1,
+                        delay_evaluation = 5)
+```
 
 to finally submit a Hyperdrive run
 
+```
+hyperdrive_config = HyperDriveConfig(run_config=src,
+                                     hyperparameter_sampling=ps,
+                                     policy = policy,
+                                     primary_metric_name="AUC",
+                                     primary_metric_goal=PrimaryMetricGoal.MAXIMIZE,
+                                     max_total_runs=20,
+                                     max_concurrent_runs=4,
+                                     )
+```
 
+and use the widget to monitor it:
+
+![](img/5.PNG)
 ### Results
-*TODO*: What are the results you got with your model? What were the parameters of the model? How could you have improved it?
+We collected the best run by AUC
+```
+best_run = remote_run.get_best_run_by_primary_metric()
+```
+![](img/6.PNG)
+![](img/7.PNG)
 
-*TODO* Remeber to provide screenshots of the `RunDetails` widget as well as a screenshot of the best model trained with it's parameters.
+this run achieved a score of 0.8 with the set of hyperparameters: 
 
+```
+hyperparameters : {"--max_depth": 20,
+ "--max_features": "sqrt",
+  "--n_estimators": 800}
+```
+
+and registered the best model by:
+
+```
+registered_model = best_run.register_model(model_name = experiment_name+"model", model_path= saved_model)
+```
+
+![](img/8.PNG)
 ## Model Deployment
-*TODO*: Give an overview of the deployed model and instructions on how to query the endpoint with a sample input.
+
+Performance of the two models obtained by automl and hyperdrive are pretty much comparable. 
+
+I've decided to deploy the custom model obtained by hyperdrive to force myself to deploy a completely custom item. 
+
+### Adapt environmet
+
+First i need to add to the Python env used for training two dependencies used to handle the inference and the service.
+
+```
+conda.add_pip_package("azureml-model-management-sdk")
+conda.add_pip_package("inference-schema")
+env.python.conda_dependencies = conda
+```
+
+then we create `AciWebservice` configurtion and we used it for deploy
+```
+from azureml.core.model import Model, InferenceConfig
+from azureml.core.webservice import AciWebservice
+
+inference_config = InferenceConfig(entry_script='score.py', environment=env, source_directory='./steps_scripts/model/' )
+
+
+aci_deployment_config = AciWebservice.deploy_configuration(cpu_cores=1,
+                                                           memory_gb=1,
+                                                           auth_enabled=True,
+                                                           enable_app_insights=True,
+                                                           description='AutoML model deploy')
+```
+
+is important to refer to the `score.py` script which handles the calls to the rest endpoint.
+
+Aside from deserializing the model and provide a `run(data)` function, i've added a set of sample input for him to infer the proper schema.
+
+
+
+```
+
+service_name = "test-deploy-ht"
+service = Model.deploy(workspace=ws,
+                       name=service_name,
+                       models=[registered_model],
+                       inference_config=inference_config,
+                       deployment_config=aci_deployment_config,
+                       overwrite=True
+                      )
+service.wait_for_deployment(show_output=True)
+
+
+print('Deployment state: ', service.state)
+print('Scoring URI: ', service.scoring_uri)
+```
+
+This is how the endpoint appears after the deploy
+![](img/9.PNG)
+
+we wait for deployment till we can make request to the endpoint by using the code in `endpoint.py`
+
+```{python}
+import requests
+import json
+from numpy import nan 
+# URL for the web service, should be similar to:
+# 'http://8530a665-66f3-49c8-a953-b82a2d312917.eastus.azurecontainer.io/score'
+scoring_uri = 'http://96f9e630-43b1-4876-820e-9b1d857c7bb2.westeurope.azurecontainer.io/score'
+# If the service is authenticated, set the key or token
+key = '4vxJev904dUJTZGIEpsexvGl55AUcBDC'
+# A set of data to score, so we get one results back
+data = {"data":
+        [{'city': 'city_103',
+  'city_development_index': 0.92,
+  'gender': nan,
+  'relevent_experience': 'Has relevent experience',
+  'enrolled_university': 'no_enrollment',
+  'education_level': 'Graduate',
+  'major_discipline': 'STEM',
+  'experience': '>20',
+  'company_size': '10/49',
+  'company_type': 'Pvt Ltd',
+  'last_new_job': '>4',
+  'training_hours': 140}]
+}
+# Convert to JSON string
+input_data = json.dumps(data)
+with open("data.json", "w") as _f:
+    _f.write(input_data)
+# Set the content type
+headers = {'Content-Type': 'application/json'}
+# If authentication is enabled, set the authorization header
+headers['Authorization'] = f'Bearer {key}'
+# Make the request and display the response
+resp = requests.post(scoring_uri, input_data, headers=headers)
+print(resp.json())
+```
+
+The service can handle also multiple inference with a single request
+
+```
+multiple_run = x.sample(78).to_dict(orient="records")
+input_data = json.dumps({"data": multiple_run})
+#print(input_data)
+resp = requests.post(scoring_uri, input_data, headers=headers)
+print(resp.json())
+```
+producing a list of results
+
+```
+{"result": ["no", "no", "no", "no", "yes", "yes", "no", "yes", "no", "no", "no", "no", "no", "no", "no", "yes", "no", "no", "yes", "no", "no", "no", "no", "no", "yes", "no", "yes", "no", "no", "no", "no", "no", "yes", "no", "no", "no", "no", "yes", "yes", "no", "yes", "no", "yes", "no", "no", "no", "no", "no", "no", "no", "no", "no", "yes", "yes", "no", "no", "no", "no", "no", "no", "yes", "no", "yes", "no", "no", "no", "no", "no", "no", "no", "no", "yes", "no", "no", "no", "no", "no", "no"]}
+
+```
+
+finally we printed the logs and deleted the service.
+
+```
+print(service.get_logs())
+service.delete()
+```
 
 ## Screen Recording
 *TODO* Provide a link to a screen recording of the project in action. Remember that the screencast should demonstrate:
@@ -230,5 +389,10 @@ to finally submit a Hyperdrive run
 - Demo of the deployed  model
 - Demo of a sample request sent to the endpoint and its response
 
-## Standout Suggestions
-*TODO (Optional):* This is where you can provide information about any standout suggestions that you have attempted.
+## Future improvements
+
+* **Single pipeline from dataset to deploy** the pipeline used in the setup phase may be further extended to cover all the training steps, testing against held out test data and then deploy of the best model.
+
+* **Model explaination with shap values** Is interesting to compute some explainition of the model (eg using shapely values). The contribution of each feature may be returned from the service during rest call.
+
+* **Pipeline for batch inferencing** Scoring of the model against a new dataset should be done offline with a batch inferencing pipeline. 

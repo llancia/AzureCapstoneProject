@@ -1,6 +1,6 @@
 <p align="center">
     <img
-    src="img/logo.svg"
+    src="./img/logo.svg"
     width="300" />
   <h1 align="center">Azure Machine Learning Engineer | Capstone Project</h1>
     <p align="center">

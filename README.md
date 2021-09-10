@@ -310,6 +310,8 @@ conda.add_pip_package("inference-schema")
 env.python.conda_dependencies = conda
 ```
 
+the final environment is available in `code\env`
+
 then we create `AciWebservice` configurtion and we used it for deploy
 ```
 from azureml.core.model import Model, InferenceConfig

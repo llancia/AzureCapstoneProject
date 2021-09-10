@@ -156,3 +156,5 @@ cython_debug/
 *.amlignore
 */tmp/*
 notebooks/azureml/*
+data.json
+diagram

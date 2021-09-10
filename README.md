@@ -32,11 +32,6 @@ It also take care of train and test splitting.
 
 Details are available in the notebook `notebooks/create_dataset.ipynb`
 
-### Get the data into your Azure ML Studio
-
-Before running the SetUp Pipeline we need to get the original dataset inside the Azure ML workspace.
-
-To do that i've create a script available in `scripts\download_dataset.sh` which downloads the file inside the data folder and then we can use the python script `scripts\create_dataset.py` to register it as an Azure Ml Dataset.
 
 
 ## Dataset
@@ -68,6 +63,12 @@ Note:
 We have to predict which data scientist is looking for a job change and thus, is a better prospect in terms of hiring.
 
 ### Access
+#### Get the data into your Azure ML Studio
+
+Before running the SetUp Pipeline we need to get the original dataset inside the Azure ML workspace.
+
+To do that i've create a script available in `scripts\download_dataset.sh` which downloads the file inside the data folder and then we can use the python script `scripts\create_dataset.py` to register it as an Azure Ml Dataset.
+#### PreProcessing and setup
 
 By running the SetUp Pipeline, from the original dataset we register two different datasets
 
@@ -178,7 +179,7 @@ while the model is available from the Model tab
 
 ## Hyperparameter Tuning
 
-In this task, an HyperDrive run  using a customized model is built.
+In this task, an HyperDrive run  using a customized model is built. 
 
 The model chosen is a RandomForest with its scikit-learn implementation.
 
@@ -186,8 +187,7 @@ RandomForest is a classification algorithm using a bagging of different trees. I
 
 To ensure the different data are ready to be handeled by the classifier an sklearn pipeline is built around it as stated in the `train.py` script. 
 
-**The script is available in** `notebooks\steps_scripts\model\train.py`
-
+**The script is available in** `code\steps_scripts\model\train.py` while the environment is available in `code\env` folder.
 
 ```
     numeric_features = ['city_development_index', 'training_hours']

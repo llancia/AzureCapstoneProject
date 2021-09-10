@@ -1,12 +1,13 @@
 <p align="center">
-
+    <img
+    src="img/logo.svg"
+    width="300" />
   <h1 align="center">Azure Machine Learning Engineer | Capstone Project</h1>
     <p align="center">
     project_description
     <br/>
 </p>
 
-![aa](img/logo.svg)
 
 A company is sponsorizing some courses for data scientist and wanto to hire potential candidates. Many people signup for their training. Company wants to know which of these candidates are really wants to work for the company after training. Using information related to demographics, education, experience are in hands from candidates signup and enrollment we want to predict their propensity to a job change.
 

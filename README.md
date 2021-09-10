@@ -30,7 +30,7 @@ The best model is then served as an endpoint to allow inference operations.
 From the raw data available [here](https://www.kaggle.com/arashnic/hr-analytics-job-change-of-data-scientists) i've set up a pipeline that prepare the data for either the hyper-parameters search and for automl task.
 It also take care of train and test splitting.
 
-Details are available in the notebook `notebooks/create_dataset.ipynb`
+Details are available in the notebook `code/create_dataset.ipynb`
 
 
 
